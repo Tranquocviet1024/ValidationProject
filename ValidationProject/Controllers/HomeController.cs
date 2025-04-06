@@ -101,7 +101,7 @@ namespace ValidationProject.Controllers
         public new ActionResult User()
         {
             if (Session["User"] == null)
-            {
+        {
                 TempData["Error"] = "Vui lòng đăng nhập để truy cập trang này.";
                 return RedirectToAction("Login", "Home");
             }
@@ -111,8 +111,8 @@ namespace ValidationProject.Controllers
                 return RedirectToAction("Dashboard", "Admin");
             }
 
-            return View();
-        }
+                return View();
+            }
 
         public ActionResult Logout()
         {
@@ -130,10 +130,13 @@ namespace ValidationProject.Controllers
 
             if (Session["User"].ToString() == "admin")
             {
+                // Lưu trạng thái đăng nhập vào session
+                HttpContext.Session.SetString("User", username);
                 return RedirectToAction("Dashboard", "Admin");
             }
 
-            return View();
+                return View();
+            }
         }
     }
 }
