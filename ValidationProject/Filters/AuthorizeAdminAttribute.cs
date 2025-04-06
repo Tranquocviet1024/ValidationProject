@@ -7,7 +7,7 @@ namespace ValidationProject.Filters
 {
     public class AuthorizeAdminAttribute : ActionFilterAttribute
     {
-        public override void OnActionExecuting(ActionExecutingContext filterContext)
+        public override void OnActionExecuting(System.Web.Mvc.ActionExecutingContext filterContext)
         {
             // Kiểm tra xem người dùng đã đăng nhập chưa
             if (filterContext.HttpContext.Session["User"] == null)

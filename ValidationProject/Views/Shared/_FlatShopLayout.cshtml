@@ -63,13 +63,13 @@
                                     <ul class="usermenu">
                                         @if (Session["User"] != null)
                                         {
-                                            <li><a href="/Home/User">Welcome, @Session["User"]</a></li>
-                                            <li><a href="/Home/Logout" class="log">Logout</a></li>
+                                        <li><a href="/Home/Index">Welcome, @Session["User"]</a></li>
+                                        <li><a href="/Home/Logout" class="log">Logout</a></li>
                                         }
                                         else
                                         {
-                                            <li><a href="/Home/Login" class="log">Login</a></li>
-                                            <li><a href="/Home/Register" class="reg">Register</a></li>
+                                        <li><a href="/Home/Login" class="log">Login</a></li>
+                                        <li><a href="/Home/Register" class="reg">Register</a></li>
                                         }
                                     </ul>
                                 </div>

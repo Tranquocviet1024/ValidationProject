@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using ValidationProject.Models; // Thêm dòng này để sử dụng LoginViewModel và RegisterViewModel
+using ValidationProject.Models;
 
 namespace ValidationProject.Controllers
 {
     public class HomeController : Controller
     {
-        // Giả lập danh sách người dùng (thay bằng database trong thực tế)
-        private static List<AppUser> users = new List<AppUser>();
+        // Giả lập danh sách người dùng (public static để AdminController truy cập)
+        public static List<AppUser> users = new List<AppUser>();
 
         public class AppUser
         {
@@ -20,24 +20,37 @@ namespace ValidationProject.Controllers
 
         public ActionResult Index()
         {
+            // Kiểm tra xem người dùng đã đăng nhập chưa
+            if (Session["User"] == null)
+            {
+                TempData["Error"] = "Vui lòng đăng nhập để truy cập trang này.";
+                return RedirectToAction("Login", "Home");
+            }
+
+            // Nếu là admin, chuyển về trang Admin Dashboard
+            if (Session["User"].ToString() == "admin")
+            {
+                return RedirectToAction("Dashboard", "Admin");
+            }
+
             return View();
         }
 
         public ActionResult About()
         {
-            ViewBag.Message = "Trang mô tả ứng dụng của bạn.";
+            ViewBag.Message = "Your application description page.";
             return View();
         }
 
         public ActionResult Contact()
         {
-            ViewBag.Message = "Trang liên hệ của bạn.";
+            ViewBag.Message = "Your contact page.";
             return View();
         }
 
         public ActionResult Login()
         {
-            return View();
+            return View(new LoginViewModel());
         }
 
         [HttpPost]
@@ -49,21 +62,25 @@ namespace ValidationProject.Controllers
                 return View(model);
             }
 
+            // Kiểm tra nếu là tài khoản admin
             if (model.Username == "admin" && model.Password == "123456")
             {
                 Session["User"] = model.Username;
                 return RedirectToAction("Dashboard", "Admin");
             }
 
+            // Kiểm tra tài khoản người dùng thông thường
             var user = users.FirstOrDefault(u => u.Username == model.Username && u.Password == model.Password);
             if (user != null)
             {
                 Session["User"] = model.Username;
-                return RedirectToAction("User", "Home");
+                return RedirectToAction("Index", "Home"); // Chuyển đến /Home/Index
             }
-
-            ModelState.AddModelError("", "Tên người dùng hoặc mật khẩu không đúng.");
-            return View(model);
+            else
+            {
+                ModelState.AddModelError("", "Tên đăng nhập hoặc mật khẩu không đúng.");
+                return View(model);
+            }
         }
 
         public ActionResult Register()
@@ -72,47 +89,36 @@ namespace ValidationProject.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Register(RegisterViewModel model)
+        public ActionResult Register(string username, string password, string confirmPassword)
         {
-            if (!ModelState.IsValid)
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirmPassword))
             {
-                return View(model);
-            }
-
-            if (users.Any(u => u.Username == model.Username))
-            {
-                ModelState.AddModelError("", "Tên người dùng đã tồn tại.");
-                return View(model);
-            }
-
-            if (model.Username.ToLower() == "admin")
-            {
-                ModelState.AddModelError("", "Tên người dùng 'admin' đã được dành sẵn.");
-                return View(model);
-            }
-
-            users.Add(new AppUser { Username = model.Username, Password = model.Password });
-            TempData["Success"] = "Đăng ký thành công! Vui lòng đăng nhập.";
-            return RedirectToAction("Login", "Home");
-        }
-
-        [HttpGet]
-        public new ActionResult User()
-        {
-            if (Session["User"] == null)
-        {
-                TempData["Error"] = "Vui lòng đăng nhập để truy cập trang này.";
-                return RedirectToAction("Login", "Home");
-            }
-
-            if (Session["User"].ToString() == "admin")
-            {
-                return RedirectToAction("Dashboard", "Admin");
-            }
-
+                ViewBag.Error = "All fields are required.";
                 return View();
             }
+
+            if (password != confirmPassword)
+            {
+                ViewBag.Error = "Password and Confirm Password do not match.";
+                return View();
+            }
+
+            if (users.Any(u => u.Username == username))
+            {
+                ViewBag.Error = "Username already exists.";
+                return View();
+            }
+
+            if (username.ToLower() == "admin")
+            {
+                ViewBag.Error = "The username 'admin' is reserved.";
+                return View();
+            }
+
+            users.Add(new AppUser { Username = username, Password = password });
+            TempData["Success"] = "Registration successful! Please login.";
+            return RedirectToAction("Login", "Home");
+        }
 
         public ActionResult Logout()
         {
@@ -124,19 +130,16 @@ namespace ValidationProject.Controllers
         {
             if (Session["User"] == null)
             {
-                TempData["Error"] = "Vui lòng đăng nhập để truy cập trang thanh toán.";
+                TempData["Error"] = "Please login to access checkout.";
                 return RedirectToAction("Login", "Home");
             }
 
             if (Session["User"].ToString() == "admin")
             {
-                // Lưu trạng thái đăng nhập vào session
-                HttpContext.Session.SetString("User", username);
                 return RedirectToAction("Dashboard", "Admin");
             }
 
-                return View();
-            }
+            return View();
         }
     }
 }
